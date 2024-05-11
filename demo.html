@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="icon" href="images/pvz.ico" type="image/x-icon">
+		<meta charset="utf-8">
+		<title>pvz</title>
+		<style>
+			#container{
+				width: 870px;
+				overflow: hidden;
+				position: relative;
+			}
+			#bg{
+				margin-left: -140px;
+			}
+			#basket{
+				position: absolute;
+				top:0px;
+				left : 0px;
+				z-index: 9;
+			}
+			.card{
+				position: absolute;
+				top:0px;
+				left : 0px;
+				z-index: 10;
+			}
+			#SUN{
+				position: absolute;
+				top:15px;
+				left : 70px;
+				z-index: 10;
+			}
+		</style>
+	</head>
+	<body ondragstart="return false">
+		<b id="SUN">50</b>
+		<div id="container">
+			<img id="bg" src="images/Background.jpg"/>
+			<!--onclick设置点击事件-->
+			<img id="basket" src="images/SunBack.png"/>
+			<img class="card" style=top:30px; onclick="drag(1)" src="images/Peashooter.png"/>
+			<img class="card" style=top:90px;" onclick="drag(2)" src="images/Repeater.png"/>
+			<img class="card" style=top:150px;" onclick="drag(3)" src="images/SnowPea.png"/>
+			<img class="card" style=top:210px;" onclick="drag(4)" src="images/SunFlower.png"/>
+			<img class="card" style=top:270px;" onclick="drag(5)" src="images/Jalapeno.png"/>
+			<img class="card" style=top:330px;" onclick="drag(6)" src="images/CherryBomb.png"/>
+			<img class="card" style=top:390px;" onclick="drag(7)" src="images/TallNut.png"/>
+			
+		</div>
+		<script src = "sprites.js">//引入外部js文件
+			
+		</script>
+		<script>
+			var zombies = [];//僵尸数组
+			var zbIndex = 0;//僵尸数组下标
+			var duration = 1000;//持续时间
+			var counter = 0;
+			var bullets = [];
+			var shooters = [];
+			var zbDieNo = 0;//僵尸死亡个数
+			var suns = [];
+			var score = 50;
+			
+			
+			
+					
+			function shoot(peashooter){			
+				for(var zombie of zombies){
+					if(zombie.route == peashooter.route && peashooter.offsetLeft-40 < zombie.offsetLeft){
+						bullets.push(createBullet(peashooter,bullets.length,bullet=>{
+							bullets = bullets.filter(item=>item!=bullet);//把一个元素从数组中删除
+							
+							container.removeChild(bullet)//从容器中删去
+						}));
+						break;
+					}
+				}
+				
+			}
+			
+			
+			function zombieDie(zombie){
+				setTimeout(function(){
+					
+					zombies = zombies.filter(item=>item!=zombie);
+					container.removeChild(zombie);
+					zbDieNo++;
+					if(zbDieNo>=20){
+						alert('游戏胜利');
+						window.location.reload();
+					}
+				},2500);
+			}
+			
+			
+			function JalapenoBoom(bomb){////////////////////////////////////////////////////////////////////////////
+				for(var zombie of zombies){
+					if(zombie.route == bomb.route){
+						zombie.route=6;
+						zombie.src = 'images/BoomDie.gif';
+						zombie.blood = 0;
+						zombieDie(zombie);
+					}
+				}
+			}
+			
+			function boom(bomb){////////////////////////////////////////////////////////////////////////////
+				for(var zombie of zombies){
+					if(zombie.route == bomb.route||zombie.route-1 == bomb.route||zombie.route+1 == bomb.route){
+						if(bomb.offsetTop>=zombie.offsetTop-150&&bomb.offsetTop<=zombie.offsetTop+150){//
+							if(bomb.offsetLeft>=zombie.offsetLeft-150&&bomb.offsetLeft<=zombie.offsetLeft+150){
+								//alert(bomb.offsetLeft);
+								//alert(zombie.offsetLeft);
+								zombie.route=6;
+								zombie.src = 'images/BoomDie.gif';
+								zombie.blood = 0;
+								zombieDie(zombie);
+							}
+							
+							
+						}
+					}
+				}
+			}
+			
+			
+			function drag(type){// 回调函数（回调参数）
+			if(type == 5){
+				createBomb(type,bomb=>{
+					bomb.src = 'images/Jalapeno.gif'
+					setTimeout(function(){
+						bomb.src='images/JalapenoAttack.gif'
+						bomb.style.left = '100px';
+						bomb.style.top = bomb.offsetTop - 45 + 'px';
+						JalapenoBoom(bomb);
+					},725);
+					setTimeout(function(){
+						container.removeChild(bomb);
+					},2000);
+				})
+				return;
+			}
+			
+			if(type == 6){
+				createBomb(type,bomb=>{
+					bomb.src = 'images/CherryBomb.gif'
+					setTimeout(function(){
+						bomb.src='images/Boom.gif'
+						bomb.style.left = bomb.offsetLeft - 70 + 'px';
+						bomb.style.top = bomb.offsetTop - 45 + 'px';
+						boom(bomb);
+					},650);
+					setTimeout(function(){
+						container.removeChild(bomb);
+					},950);
+				})
+				return;
+			}
+			
+			
+			
+			// 下面的是射手类
+				createPeashooter(type,function (peashooter){
+					
+					
+					
+					
+					if(type==4){
+						peashooter.timer3 = setInterval(function(){
+							suns.push(createSun(peashooter,suns.length,sun=>{
+								
+								suns=suns.filter(item=>item!=sun);
+								container.removeChild(sun);
+								if(score<999)
+								{
+									score+=25;
+								}
+								else{
+									score=999;
+								}
+								document.getElementById("SUN").innerHTML=score;
+								//document.getElementById("die").innerHTML=score;
+							}));
+						},4000);
+					}
+					
+					
+					
+					peashooter.timer = setInterval(function(){
+						shoot(peashooter);	
+					},2000);
+					
+					if(type == 2){
+						setTimeout(function(){
+							peashooter.timer2 = setInterval(function(){
+								shoot(peashooter);	
+							},2000);
+						},100);
+					}
+					
+					
+					if(type == 7){
+						peashooter.style.left = peashooter.offsetLeft - 5 + 'px';
+						peashooter.style.top = peashooter.offsetTop -35 + 'px';
+					}
+					
+					
+					shooters.push(peashooter);
+					//createBullet(peashooter,null);
+					//alert('种植结束，该发射子弹了');
+					
+				});
+				
+			}
+			
+			
+			//主函数
+			window.onload = function(){
+				
+					setInterval(function(){
+					
+						addSprite();//添加精灵
+						
+						spriteStep();//精灵走步
+						
+						onHitting();//精灵碰撞
+					
+					
+					
+				},100/8);
+			}
+			
+			function addSprite(){
+				
+				if(zbIndex>=20){
+					return;
+				}
+				counter++;
+				if(parseInt(counter/duration) >= zbIndex){
+					zombies.push(createZombie(zbIndex,function(){
+						alert('你的脑袋被僵尸吃掉了');
+						window.location.reload();//刷新当前页面
+					}));
+					
+					if(zbIndex == 2){
+						duration = 100;
+						counter == duration * zbIndex;
+					}
+					
+					if(zbIndex == 10){
+						duration = 2000;
+						counter = duration * zbIndex;
+					}
+					
+					if(zbIndex == 11){
+						duration = 100;
+						counter = duration * zbIndex;
+					}
+					
+					zbIndex++;
+				}
+			}
+			
+			function spriteStep(){
+				for(var bullet of bullets){
+					bullet.step();
+				}
+				
+				
+				for(var zombie of zombies){
+					zombie.step();//让这个僵尸走步
+				}
+				
+				for(var sun of suns){
+					sun.step();
+				}
+					
+			}
+			
+			function hitZombie(bullet){//攻击僵尸
+				for(var zombie of zombies){
+					if(bullet.route == zombie.route && bullet.offsetLeft - 70 > zombie.offsetLeft && bullet.offsetLeft - 140<zombie.offsetLeft){
+						zombie.blood-=20;
+						
+						//减速
+						if(bullet.type == 3)
+						{
+							zombie.speed = 1;
+							/*setTimeout(function(){
+								zombie.speed = 2;
+							},10000)*/
+						}
+							
+						
+						
+						
+						
+						if(zombie.blood == 200){
+							zombie.src = 'images/Zombie.gif';
+						}
+						
+						
+						if(zombie.blood == 0){
+							
+							
+							
+							var head = createHead(zombie);
+							if(zombie.src.endsWith('ZombieAttack.gif')){
+								zombie.src = 'images/ZombieLostHeadAttack.gif';
+							}
+							else if(zombie.src.endsWith('Zombie.gif')){
+								zombie.src = 'images/ZombieLostHead.gif';
+							}
+							setTimeout(function(){//
+								zombie.route = 6;
+								zombie.src= 'images/ZombieDie.gif';
+								
+								container.removeChild(head);
+							},1500);
+							
+							zombieDie(zombie);
+							
+						}
+						else{
+							if(bullet.type != 3)
+							{
+								if(zombie.style.opacity != 0.8){
+									zombie.style.opacity = 0.7;//受击反馈
+									setTimeout(function(){
+										zombie.style.opacity = 1;
+									},50)
+									
+								}
+								
+							}
+							if(bullet.type == 3)
+							{
+								zombie.style.opacity = 0.8;//受击反馈
+								
+								/*setTimeout(function(){
+									zombie.style.opacity = 1;
+								},10000)*/
+								
+								
+							}
+							
+							
+							
+						}
+						
+						return true;
+					}
+				}
+				return false;
+			}
+			
+			
+			
+			function onHitting(){
+				for(var bullet of bullets){
+					if(hitZombie(bullet)){
+						if(bullet.type == 3){
+							bullet.src = 'images/snowBulletHit.png';
+						}
+						else{
+							bullet.src = 'images/BulletHit.gif';
+						}
+						
+						
+					}
+				}
+				//吃植物
+				for(var zombie of zombies){//拿出来一个僵尸判断
+						var peashooter = eatPlantBy(zombie);
+						if(peashooter && zombie.src.endsWith('Zombie.gif')){//判断是否正在被吃
+							if(zombie.blood<=200){
+								zombie.src = 'images/ZombieAttack.gif';
+							}
+							else{
+								if(zombie.status == 5){
+									zombie.src = 'images/BucketheadZombieAttack.gif';
+								}
+								else if(zombie.status == 3 ||zombie.status == 4){
+									zombie.src = 'images/ConeheadZombieAttack.gif';
+								}
+								
+							}
+							
+						
+							
+							peashooter.attack.push(zombie.id);
+						}
+						
+						
+						else if(peashooter && peashooter.blood == 0){//植物没血了
+							clearInterval(peashooter.timer);//取消定时器
+							clearInterval(peashooter.timer2);
+							clearInterval(peashooter.timer3);
+							
+							
+							shooters.splice(peashooter.index,1)
+							container.removeChild(peashooter);
+							
+							for(var id of peashooter.attack){
+								var zzz = document.getElementById(id);
+								if(zzz && zzz.blood<=200){//判断是否活着
+									zzz.src = 'images/Zombie.gif';
+								}
+								else if(zzz && zzz.blood>200 && (zzz.status == 3||zzz.status == 4)){
+									zzz.src = 'images/ConeheadZombie.gif';
+								}
+								else if(zzz && zzz.blood>400 && zzz.status == 5){
+									zzz.src = 'images/BucketheadZombie.gif';
+								}
+							}
+						}
+						else if(peashooter){//正在吃(掉血)
+							peashooter.blood-=2;
+						}
+						if(peashooter){//正在吃(掉血)
+							if(peashooter.type==7&&peashooter.blood<8888&&peashooter.blood>4444){
+								peashooter.src = 'images/TallnutCracked1.gif'
+							}
+							if(peashooter.type==7&&peashooter.blood<4444){
+								peashooter.src = 'images/TallnutCracked2.gif'
+							}
+							
+							
+						}
+						
+					
+				}
+				
+			}
+		
+		
+		
+		function eatPlantBy(zombie){
+			for(var i in shooters){
+				var peashooter = shooters[i];
+				if(peashooter.route == zombie.route && peashooter.offsetLeft-24 >zombie.offsetLeft&& peashooter.offsetLeft - 150<zombie.offsetLeft){
+					peashooter.index = i;
+					return peashooter;
+				}
+			}
+			return null;
+		}
+		</script>
+		
+	</body>
+</html>
